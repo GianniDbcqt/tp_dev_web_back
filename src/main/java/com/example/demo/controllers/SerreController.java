@@ -1,7 +1,13 @@
 package com.example.demo.controllers;
 
 //import com.example.demo.models.Serre;
+
+import com.example.demo.exceptions.NotFoundException;
+import com.example.demo.models.Sensor;
+import com.example.demo.models.Serre;
 import com.example.demo.repositories.SerreRepository;
+import com.example.demo.services.SerreService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,41 +17,53 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
+@RestController
+@RequestMapping("/serres")
+@RequiredArgsConstructor
 
-/*@RestController
-@RequestMapping("/api/serres") // Define the base path for serre API requests
 public class SerreController {
 
-    @Autowired
-    private SerreRepository serreRepository;
-
+    private final SerreService serreService;
 
 
     @GetMapping
     public List<Serre> getAllSerres() {
-        return serreRepository.findAll();
+        return this.serreService.getSerre();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Serre> getSerreById(@PathVariable Long id) {
-        Optional<Serre> serre = serreRepository.findById(id);
+        Optional<Serre> serre = serreService.findById(id);
         return serre.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
     public ResponseEntity<Serre> createSerre(@RequestBody Serre serre) {
-        Serre savedSerre = serreRepository.save(serre);
-        return new ResponseEntity<>(savedSerre, HttpStatus.CREATED);
+        try {
+            return new ResponseEntity<>(this.serreService.updateSerre(serre), HttpStatus.OK);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
-   /* @PutMapping("/{id}")
+    @DeleteMapping
+    public ResponseEntity<Void> deleteSerre(@RequestBody Serre serre) {
+        try {
+            this.serreService.deleteSerre(serre.getId());
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+   @PostMapping("/{id}")
     public ResponseEntity<Serre> updateSerre(@PathVariable Long id, @RequestBody Serre updatedSerre) {
-        Optional<Serre> existingSerre = serreRepository.findById(id);
+        Optional<Serre> existingSerre = serreService.findById(id);
 
         if (existingSerre.isPresent()) {
 
             updatedSerre.setId(id); // Ensure ID is not changed from the request
-            serreRepository.save(updatedSerre);
+            serreService.updateSerre(updatedSerre);
             return new ResponseEntity<>(updatedSerre, HttpStatus.OK);
 
 
@@ -55,13 +73,32 @@ public class SerreController {
 
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSerre(@PathVariable Long id) {
-        serreRepository.deleteById(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    @PostMapping("/{serreId}/sensors")
+    public ResponseEntity<Sensor> ajouterSensor(@PathVariable Long serreId, @RequestBody Sensor sensor) {
+
+        try {
+            Serre serreMiseAJour = serreService.ajouterSensorASerre(serreId, sensor);
+            return new ResponseEntity<>(sensor, HttpStatus.CREATED);
+
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        }
+
+    }
+
+    @DeleteMapping("/{serreId}/sensors/{sensorId}")
+    public ResponseEntity<Void> supprimerSensor(@PathVariable Long serreId, @PathVariable Long sensorId) {
+
+        try {
+            serreService.supprimerSensorDeSerre(serreId, sensorId);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (NotFoundException e) {
+
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
 
     }
 
 
 }
-*/

@@ -1,11 +1,12 @@
-/*package com.example.demo.models;
+package com.example.demo.models;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import java.util.List;
 
 @Entity
 @Getter
@@ -21,10 +22,8 @@ public class Serre {
     private String location;
     private String plantType;
 
-    // You might need to adjust this depending on your data model
-    @ElementCollection // For storing map-like structures in JPA.
-    @CollectionTable(name = "serre_capteurs", joinColumns = @JoinColumn(name = "serre_id"))
-    @MapKeyColumn(name = "capteur_name")
-    @Column(name = "capteur_value") // For storing the sensor data dynamically.
-    private Map<String, String> capteurs = new HashMap<>();
-}*/
+
+    @OneToMany(mappedBy = "serre", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Sensor> sensors;
+
+}
