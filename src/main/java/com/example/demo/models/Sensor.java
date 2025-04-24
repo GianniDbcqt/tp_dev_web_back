@@ -1,5 +1,7 @@
+
 package com.example.demo.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,16 +19,21 @@ public class Sensor {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "serre_id")
+    @JsonIgnore
     private Serre serre;
 
 
-    private String Temperature;
-    private String Humidite;
+
+
+    private String temperature;
+    private String humidite;
     private String windowState;
-    private String WaterLevel;
-    //private double valeur;
+    private String waterLevel;
     private LocalDateTime dateReleve;
+    private Double valeur;
+    private String Light;
+    private String soilMoisture;
 
-
+    private String type;
 
 }

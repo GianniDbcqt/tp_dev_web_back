@@ -8,7 +8,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.demo.repositories.SensorRepository;
 
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,18 +21,40 @@ import java.util.Optional;
 public class SerreService {
 
     private final SerreRepository serreRepository;
+    private final SensorRepository sensorRepository;
+
 
 
     @Transactional
-    public Serre ajouterSensorASerre(Long serreId, Sensor sensor) {
+    public Sensor ajouterSensorASerre(Long serreId, Sensor sensor) {
         Optional<Serre> serreOptional = serreRepository.findById(serreId);
 
         if (serreOptional.isPresent()) {
             Serre serre = serreOptional.get();
             sensor.setSerre(serre);
-            serre.getSensors().add(sensor);
-            return serreRepository.save(serre);
 
+            sensor.setDateReleve(LocalDateTime.now());
+
+            if ("temperature".equals(sensor.getType())) {
+                sensor.setTemperature(String.valueOf(sensor.getValeur()));
+            }
+            else if ("humidity".equals(sensor.getType())) {
+                sensor.setHumidite(String.valueOf(sensor.getValeur()));
+            }
+            else if ("waterLevel".equals(sensor.getType())) {
+                sensor.setWaterLevel(String.valueOf(sensor.getValeur()));
+            }
+            else if ("windowState".equals(sensor.getType())) {
+                sensor.setWindowState(String.valueOf(sensor.getValeur()));
+            }
+            else if ("light".equals(sensor.getType())) {
+                sensor.setLight(String.valueOf(sensor.getValeur()));
+            }
+            else if ("soilMoisture".equals(sensor.getType())) {
+                sensor.setSoilMoisture(String.valueOf(sensor.getValeur()));
+            }
+
+            return sensorRepository.save(sensor); // Sauvegarde le capteur mis à jour
         } else {
             throw new NotFoundException("Serre non trouvée avec l'ID : " + serreId);
         }
@@ -92,5 +117,11 @@ public class SerreService {
         } else {
             throw new NotFoundException("Serre non trouvée avec l'ID : " + serreId);
         }
+    }
+
+    public List<Sensor> getSensorsBySerreId(Long serreId) {
+        Serre serre = serreRepository.findById(serreId)
+                .orElseThrow(() -> new NotFoundException("Serre non trouvée avec l'ID : " + serreId));
+        return sensorRepository.findBySerre(serre);
     }
 }
