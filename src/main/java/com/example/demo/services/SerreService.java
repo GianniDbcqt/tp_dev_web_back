@@ -3,13 +3,12 @@ package com.example.demo.services;
 import com.example.demo.exceptions.NotFoundException;
 import com.example.demo.models.Sensor;
 import com.example.demo.models.Serre;
+import com.example.demo.repositories.SensorRepository;
 import com.example.demo.repositories.SerreRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.demo.repositories.SensorRepository;
-
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,64 +22,76 @@ public class SerreService {
     private final SerreRepository serreRepository;
     private final SensorRepository sensorRepository;
 
-
-
     @Transactional
     public Sensor ajouterSensorASerre(Long serreId, Sensor sensor) {
-        Optional<Serre> serreOptional = serreRepository.findById(serreId);
+        Serre serre = serreRepository.findById(serreId)
+                .orElseThrow(() -> new NotFoundException("Serre non trouvée avec l'ID : " + serreId));
 
-        if (serreOptional.isPresent()) {
-            Serre serre = serreOptional.get();
-            sensor.setSerre(serre);
-
-            sensor.setDateReleve(LocalDateTime.now());
-
-            if ("temperature".equals(sensor.getType())) {
-                sensor.setTemperature(String.valueOf(sensor.getValeur()));
-            }
-            else if ("humidity".equals(sensor.getType())) {
-                sensor.setHumidite(String.valueOf(sensor.getValeur()));
-            }
-            else if ("waterLevel".equals(sensor.getType())) {
-                sensor.setWaterLevel(String.valueOf(sensor.getValeur()));
-            }
-            else if ("windowState".equals(sensor.getType())) {
-                sensor.setWindowState(String.valueOf(sensor.getValeur()));
-            }
-            else if ("light".equals(sensor.getType())) {
-                sensor.setLight(String.valueOf(sensor.getValeur()));
-            }
-            else if ("soilMoisture".equals(sensor.getType())) {
-                sensor.setSoilMoisture(String.valueOf(sensor.getValeur()));
-            }
-
-            return sensorRepository.save(sensor); // Sauvegarde le capteur mis à jour
-        } else {
-            throw new NotFoundException("Serre non trouvée avec l'ID : " + serreId);
+        if (serre.getSensors().stream().anyMatch(s -> s.getType().equals(sensor.getType()))) {
+            throw new IllegalArgumentException("Un capteur de ce type existe déjà pour cette serre.");
         }
+
+        sensor.setSerre(serre);
+        sensor.setDateReleve(LocalDateTime.now());
+
+        // Appeler directement sensorRepository.save() pour la création
+        return sensorRepository.save(sensor);
     }
 
     @Transactional
     public void supprimerSensorDeSerre(Long serreId, Long sensorId) {
         Optional<Serre> existingSerre = serreRepository.findById(serreId);
         if (existingSerre.isPresent()) {
-            Serre serre = existingSerre.get();
-
-            serre.getSensors().removeIf(sensor -> sensor.getId().equals(sensorId));
-            serreRepository.save(serre);
-
+            Optional<Sensor> existingSensor = sensorRepository.findById(sensorId);
+            if (existingSensor.isPresent()) {
+                sensorRepository.delete(existingSensor.get());
+            } else {
+                throw new NotFoundException("Capteur non trouvé avec l'ID : " + sensorId);
+            }
 
         } else {
             throw new NotFoundException("Serre non trouvée avec l'ID : " + serreId);
-
         }
     }
-
-
 
     public List<Serre> getSerre() {
         return this.serreRepository.findAll();
     }
+
+    @Transactional
+    public Sensor updateSensor(Long serreId, Long sensorId, Sensor updatedSensor) {
+        Sensor sensor;
+            sensor = sensorRepository.findById(sensorId)
+                    .orElseThrow(() -> new NotFoundException("Capteur non trouvé avec l'ID : " + sensorId));
+
+            switch (updatedSensor.getType()) {
+                case "temperature":
+                    sensor.setTemperature(String.valueOf(updatedSensor.getValeur()));
+                    break;
+                case "humidity":
+                    sensor.setHumidite(String.valueOf(updatedSensor.getValeur()));
+                    break;
+                case "waterLevel":
+                    sensor.setWaterLevel(String.valueOf(updatedSensor.getValeur()));
+                    break;
+                case "windowState":
+                    sensor.setWindowState(String.valueOf(updatedSensor.getValeur()));
+                    break;
+                case "light":
+                    sensor.setLight(String.valueOf(updatedSensor.getValeur()));
+                    break;
+                case "soilMoisture":
+                    sensor.setSoilMoisture(String.valueOf(updatedSensor.getValeur()));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Type de capteur inconnu : " + updatedSensor.getType());
+            }
+
+
+        sensor.setDateReleve(LocalDateTime.now());
+        return sensorRepository.save(sensor);
+    }
+
 
     @Transactional
     public Serre updateSerre(Serre serre) throws NotFoundException {
@@ -103,6 +114,7 @@ public class SerreService {
             return existingSerre;
         }
     }
+
 
 
     public Optional<Serre> findById(Long id) {

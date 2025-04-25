@@ -60,13 +60,26 @@ public class SerreController {
         }
     }
 
-
-
     @PostMapping("/{serreId}/sensors")
-    public ResponseEntity<Sensor> ajouterSensor(@PathVariable Long serreId, @RequestBody Sensor sensor) {
+    public ResponseEntity<?> ajouterSensorASerre(@PathVariable Long serreId, @RequestBody Sensor sensor) {
         try {
             Sensor createdSensor = serreService.ajouterSensorASerre(serreId, sensor);
-            return new ResponseEntity<>(createdSensor, HttpStatus.CREATED);
+            return new ResponseEntity<>(createdSensor, HttpStatus.CREATED); // 201 Created
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la création du capteur : " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{serreId}/sensors/{sensorId}")
+    public ResponseEntity<Sensor> updateSensor(
+            @PathVariable Long serreId,
+            @PathVariable Long sensorId,
+            @RequestBody Sensor updatedSensor) {
+        try {
+            Sensor updated = serreService.updateSensor(serreId, sensorId, updatedSensor);
+            return new ResponseEntity<>(updated, HttpStatus.OK);
         } catch (NotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
